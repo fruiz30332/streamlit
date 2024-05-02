@@ -14,8 +14,6 @@ def preprocess_image(image):
     image = image.resize((28, 28))
     # Normalizar los valores de píxeles
     image_array = np.array(image) / 255.0
-    # Agregar un tercer canal para que coincida con las expectativas del modelo
-    image_array = np.expand_dims(image_array, axis=-1)
     return image_array
 
 # Widget para cargar una imagen
@@ -27,7 +25,7 @@ if uploaded_image:
 
     # Preprocesar la imagen
     preprocessed_image = preprocess_image(image)
-    st.image(preprocessed_image, caption="Imagen procesadada", use_column_width=True)
+
     # Hacer predicciones con el modelo
     predictions = model.predict(np.expand_dims(preprocessed_image, axis=0))
     predicted_class = np.argmax(predictions)
