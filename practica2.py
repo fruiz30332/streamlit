@@ -1,33 +1,40 @@
 import streamlit as st
-import numpy as np
 import tensorflow as tf
-from PIL import Image
+import cv2
+import numpy as np
+from tensorflow.keras.datasets import mnist
 
-# Cargar el modelo preentrenado de Keras (MNIST)
-model = tf.keras.applications.MobileNetV2(weights='imagenet', include_top=False)
+# Load the MNIST model (replace with your actual path)
+model = tf.keras.models.load_model("path/to/model.h5")
 
-# Función para preprocesar la imagen
-def preprocess_image(image):
-    # Convertir a escala de grises
-    image = image.convert('L')
-    # Redimensionar a 28x28 píxeles
-    image = image.resize((28, 28))
-    # Normalizar los valores de píxeles
-    image_array = np.array(image) / 255.0
-    return image_array
+def predict_digit(image_file):
+  # Read the uploaded image
+  img = cv2.imdecode(np.frombuffer(image_file.read(), np.uint8), cv2.IMREAD_GRAYSCALE)
+  
+  # Preprocess the image
+  img = cv2.resize(img, (28, 28))
+  img = img.astype('float32') / 255.0
+  img_data = np.expand_dims(img, axis=0)
+  
+  # Make predictions
+  predictions = model.predict(img_data)
+  predicted_digit = np.argmax(predictions[0])
+  return predicted_digit
 
-# Widget para cargar una imagen
-uploaded_image = st.file_uploader("Cargar una imagen de un dígito manuscrito", type=["jpg", "png"])
 
-if uploaded_image:
-    image = Image.open(uploaded_image)
-    st.image(image, caption="Imagen cargada", use_column_width=True)
+# Title and description for the app
+st.title("MNIST Digit Prediction")
+st.write("Upload an image of a handwritten digit (0-9) for prediction.")
+  
+# File uploader widget
+uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+  
+if uploaded_file is not None:
+    # Display uploaded image (optional)
+    st.image(cv2.cvtColor(cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB))
+    
+    # Make prediction and display result
+    predicted_digit = predict_digit(uploaded_file)
+    st.write(f"Predicted digit: {predicted_digit}")
 
-    # Preprocesar la imagen
-    preprocessed_image = preprocess_image(image)
 
-    # Hacer predicciones con el modelo
-    predictions = model.predict(np.expand_dims(preprocessed_image, axis=0))
-    predicted_class = np.argmax(predictions)
-
-    st.write(f"Clase predicha: {predicted_class}")
